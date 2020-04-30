@@ -1,4 +1,4 @@
-# goci-example
+# JFrog Pipelines and Jenkins Example
 
 This is a repo that is used for the blog [_Jenkins and JFrog Pipelines: Working Together to Release Your Software_](https://jfrog.com/blog/). The blog shows how to use Jenkins and JFrog Pipelines together to orchestrate your code from build to release.
 
