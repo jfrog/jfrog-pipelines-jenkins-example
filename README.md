@@ -1,6 +1,8 @@
 # goci-example
 
-This is a repo that is used for the blog [_Jenkins and JFrog Pipelines: Working Together to Release Your Software_](https://jfrog.com/blog/). The blog shows how to use a Jenkins Pipeline as CI and then use it to trigger JFrog Pipelines for staging, test and release. The application under tests is a simple GO REST application. The Jenkins pipeline is defined in the [Jenkinsfile](./Jenkinsfile) and the JFrog Pipeline is defined in the [pipeline.yml](./pipeline.yml).
+This is a repo that is used for the blog [_Jenkins and JFrog Pipelines: Working Together to Release Your Software_](https://jfrog.com/blog/). The blog shows how to use Jenkins and JFrog Pipelines together to orchestrate your code from build to release.
+
+For this example, we have built a Go REST application that we want to build, run unit tests and then a Docker push to a staging repository. Jenkins will handle this part. Next, JFrog Pipelines will deploy your Docker Go application from the staging repository to a Kubernetes cluster. We will use Google Kubernetes Engine (GKE). Additionally, we will use Artifactory as our Docker registry. This makes it easy to promote the build to release without pushing the same build to another release registry. The Jenkins pipeline is defined in the [Jenkinsfile](./Jenkinsfile) and the JFrog Pipeline is defined in the [pipeline.yml](./pipeline.yml).
 
 ![Diagram-all](https://user-images.githubusercontent.com/6440106/80759359-09d39e80-8aec-11ea-9beb-0334a81b2e50.png)
 
