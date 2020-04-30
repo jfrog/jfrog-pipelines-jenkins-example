@@ -1,0 +1,91 @@
+resources:
+  - name: gociexampleGithubRepo
+    type: GitRepo
+    configuration:
+      gitProvider: jefferyfryGithub
+      path: jefferyfry/goci-example
+  - name: jenkinsBuildInfo
+    type: BuildInfo
+    configuration:
+      sourceArtifactory: PartnershipArtifactory
+      buildName: goci-example/master
+      buildNumber: 1
+      externalCI: jenkins_openshiftk8s_com
+  - name: releaseBuildInfo
+    type: BuildInfo
+    configuration:
+      sourceArtifactory: PartnershipArtifactory
+      buildName: goci-example/master
+      buildNumber: 1
+pipelines:
+  - name: goci_example
+    steps:
+      - name: start_from_jenkins
+        type: Bash
+        configuration:
+          inputResources:
+            - name: jenkinsBuildInfo
+        execution:
+          onExecute:
+            - echo 'Jenkins job triggered Pipelines'
+      - name: deploy_staging
+        type: HelmDeploy
+        configuration:
+          inputSteps:
+            - name: start_from_jenkins
+          inputResources:
+            - name: gociexampleGithubRepo
+              trigger: false
+          integrations:
+            - name: gcpK8sPTRENGCreds
+            - name: gociexample
+          releaseName: goci-example
+          chartPath: chart/goci-example/
+          flags: --debug
+        execution:
+          onStart:
+            - gcloud container clusters get-credentials jefff-goci-example --zone us-central1-c --project jfrog-parnership-team
+            - helm delete goci-example --purge || true
+      - name: wait_for_server
+        type: Bash
+        configuration:
+          inputSteps:
+            - name: deploy_staging
+        execution:
+          onExecute:
+            - timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://goci-example.35.238.177.209.xip.io)" != "200" ]]; do sleep 5; done' || true
+      - name: staging_test
+        type: Bash
+        configuration:
+          inputSteps:
+            - name: wait_for_server
+          inputResources:
+            - name: gociexampleGithubRepo
+              trigger: false
+          runtime:
+            type: image
+            image:
+              auto:
+                language: go
+                versions:
+                  - "1.13"
+          environmentVariables:
+            STAGING_URL: "http://goci-example.35.238.177.209.xip.io"
+        execution:
+          onExecute:
+            - cd ../dependencyState/resources/gociexampleGithubRepo
+            - go mod download
+            - go test ./test -run Staging
+      - name: promote_release
+        type: PromoteBuild
+        configuration:
+          inputSteps:
+            - name: staging_test
+          targetRepository: public-images
+          status: Released
+          comment: Passed staging tests.
+          inputResources:
+            - name: jenkinsBuildInfo
+              trigger: false
+          outputResources:
+            - name: releaseBuildInfo

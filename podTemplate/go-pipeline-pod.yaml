@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-pipeline-pod
+spec:
+  containers:
+    - name: golang
+      image: golang:1.14.2
+      command:
+        - cat
+      tty: true
+    - name: jfrog-cli-go
+      image: docker.bintray.io/jfrog/jfrog-cli-go:latest
+      imagePullPolicy: Always
+      command:
+        - cat
+      tty: true
+    - name: docker
+      image: docker:1.11
+      imagePullPolicy: Always
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
+  restartPolicy: Never
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
